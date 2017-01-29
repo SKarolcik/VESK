@@ -26,7 +26,7 @@ except KeyboardInterrupt:
     # Leave the led turned off.
     print '\nCleaning up...'
     gpio.pinMode(10, gpio.OUTPUT)
-	gpio1.pinMode(11, gpio1.OUTPUT)
+    gpio1.pinMode(11, gpio1.OUTPUT)
     gpio.digitalWrite(10, gpio.LOW)
     gpio1.digitalWrite(11, gpio1.LOW)
 
