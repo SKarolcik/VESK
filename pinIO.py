@@ -6,14 +6,14 @@ gpio1 =GPIO(debug=False)
 # Set up an LED on pin 6
 # Prepare pins and loop
 
-gpio.pinMode(10, gpio.OUTPUT)
-gpio1.pinMode(11, gpio1.OUTPUT)
+gpio.pinMode(10, gpio.PWM)
+gpio1.pinMode(11, gpio1.PWM)
 
 try:
     while(True):
         # Write a state to the pin. ON or OFF.
-        int val = random.randint(0,255)
-        int val1 = random.randint(0,255)
+        val = random.randint(0,255)
+        val1 = random.randint(0,255)
         print (val, val1)
         gpio.analogWrite(10,val)
         gpio1.analogWrite(11,val1)
@@ -25,6 +25,8 @@ try:
 except KeyboardInterrupt:
     # Leave the led turned off.
     print '\nCleaning up...'
+    gpio.pinMode(10, gpio.OUTPUT)
+	gpio1.pinMode(11, gpio1.OUTPUT)
     gpio.digitalWrite(10, gpio.LOW)
     gpio1.digitalWrite(11, gpio1.LOW)
 
