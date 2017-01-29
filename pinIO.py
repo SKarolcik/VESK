@@ -14,7 +14,7 @@ try:
         # Write a state to the pin. ON or OFF.
         val = random.randint(0,255)
         val1 = random.randint(0,255)
-        print (val + ' ' + val1 + '\n')
+        print ("%d %d\n", val, val1)
         gpio.analogWrite(10,val)
         gpio1.analogWrite(11,val1)
 
