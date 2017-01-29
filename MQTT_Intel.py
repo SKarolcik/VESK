@@ -1,5 +1,5 @@
 import paho.mqtt.client as paho
-import os, urlparse
+import time
 
 # Define event callbacks
 def on_connect(mosq, obj, rc):
@@ -33,8 +33,12 @@ mqttc.username_pw_set('ccdmmpze',password = '4dE8WJGSbqja')
 mqttc.connect('m20.cloudmqtt.com',18428,2)
 # Start subscribe, with QoS level 0
 
+mqttc.loop_start()
 mqttc.subscribe("test/message", 0)
-mqttc.loop(1)
+time.sleep(30)
+
+mqttc.disconnect()
+mqttc.loop_stop()
 
 # Publish a message
 
