@@ -1,5 +1,5 @@
-import paho.mqtt.client as paho
 from wiringx86 import GPIOEdison as GPIO
+import paho.mqtt.client as paho
 import time
 
 gpio = GPIO(debug=False)
@@ -7,15 +7,14 @@ gpio1 =GPIO(debug=False)
 # Set up an LED on pin 6
 # Prepare pins and loop
 
-gpio.pinMode(9, gpio.PWM)
-gpio1.pinMode(6, gpio1.PWM)
 
 # Define event callbacks
 def process_input (numbers):
 	lis_num = [x.strip() for x in numbers.split(',')]
 	val1 = int((int(lis_num[1])/10000)*255)
 	val2 = int((int(lis_num[2])/10000)*255)
-	gpio.analogWrite(9,val)
+	print (val1, val2)
+	gpio.analogWrite(9,val2)
     gpio1.analogWrite(6,val1)
 
 
@@ -42,7 +41,8 @@ mqttc.on_connect = on_connect
 mqttc.on_publish = on_publish
 mqttc.on_subscribe = on_subscribe
 
-
+gpio.pinMode(9, gpio.PWM)
+gpio1.pinMode(6, gpio1.PWM)
 # Uncomment to enable debug messages
 #mqttc.on_log = on_log
 
@@ -50,6 +50,9 @@ mqttc.on_subscribe = on_subscribe
 mqttc.username_pw_set('ccdmmpze',password = '4dE8WJGSbqja')
 mqttc.connect('m20.cloudmqtt.com',18428,2)
 # Start subscribe, with QoS level 0
+
+gpio.pinMode(9, gpio.PWM)
+gpio1.pinMode(6, gpio1.PWM)
 
 mqttc.loop_start()
 mqttc.subscribe("sensor/rgb", 1)
