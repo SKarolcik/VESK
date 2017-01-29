@@ -11,8 +11,8 @@ gpio1 =GPIO(debug=False)
 # Define event callbacks
 def process_input (numbers):
 	lis_num = [x.strip() for x in numbers.split(',')]
-	val1 = int((int(lis_num[1])/10000)*255)
-	val2 = int((int(lis_num[2])/10000)*255)
+	val1 = int((float(lis_num[1])/10000)*255)
+	val2 = int((float(lis_num[2])/10000)*255)
 	print (val1, val2)
 	gpio.analogWrite(9,val2)
     gpio1.analogWrite(6,val1)
@@ -53,12 +53,13 @@ mqttc.connect('m20.cloudmqtt.com',18428,2)
 
 gpio.pinMode(9, gpio.PWM)
 gpio1.pinMode(6, gpio1.PWM)
+mqttc.loop_start()
+mqttc.subscribe("sensor/rgb", 1)
 
 try:
     while(True):
-        mqttc.loop_start()
-        mqttc.subscribe("sensor/rgb", 1)
-#time.sleep(120)
+        
+        time.sleep(1)
 
 except KeyboardInterrupt:
     # Leave the led turned off.
