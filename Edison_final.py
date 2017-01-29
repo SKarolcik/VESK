@@ -54,20 +54,25 @@ mqttc.connect('m20.cloudmqtt.com',18428,2)
 gpio.pinMode(9, gpio.PWM)
 gpio1.pinMode(6, gpio1.PWM)
 
-mqttc.loop_start()
-mqttc.subscribe("sensor/rgb", 1)
-time.sleep(120)
+try:
+    while(True):
+        mqttc.loop_start()
+        mqttc.subscribe("sensor/rgb", 1)
+#time.sleep(120)
 
-mqttc.disconnect()
-mqttc.loop_stop()
-gpio.pinMode(9, gpio.OUTPUT)
-gpio1.pinMode(6, gpio1.OUTPUT)
-gpio.digitalWrite(9, gpio.LOW)
-gpio1.digitalWrite(6, gpio1.LOW)
+except KeyboardInterrupt:
+    # Leave the led turned off.
+    print '\nCleaning up...'
+    mqttc.disconnect()
+    mqttc.loop_stop()
+    gpio.pinMode(9, gpio.OUTPUT)
+    gpio1.pinMode(6, gpio1.OUTPUT)
+    gpio.digitalWrite(9, gpio.LOW)
+    gpio1.digitalWrite(6, gpio1.LOW)
 
     # Do a general cleanup. Calling this function is not mandatory.
-gpio.cleanup()
-gpio1.cleanup()
+    gpio.cleanup()
+    gpio1.cleanup()
 
 # Publish a message
 
