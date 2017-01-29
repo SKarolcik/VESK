@@ -14,11 +14,12 @@ try:
         # Write a state to the pin. ON or OFF.
         val = random.randint(0,255)
         val1 = random.randint(0,255)
+        print (val + ' ' + val1 + '\n')
         gpio.analogWrite(10,val)
-        gpio1.analogWrite(11,val)
+        gpio1.analogWrite(11,val1)
 
         # Sleep for a while.
-        time.sleep(1)
+        time.sleep(10)
 
 # When you get tired of seeing the led blinking kill the loop with Ctrl-C.
 except KeyboardInterrupt:
