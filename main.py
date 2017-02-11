@@ -250,7 +250,7 @@ while(True):
     i2C.writeto(41, b'\xbA') #Write command to access color register
     blue = decode(i2C.readfrom(41, 2)) #Read 2 bytes from color register
     time.sleep(waitTime)
-    mqttc.publish('sensor/rgb', str(clear) + "," + str(red) + "," + str(green) + "," + str(blue), qos=1)
+    mqttc.publish('esys/VESKembedded/test', str(clear) + "," + str(red) + "," + str(green) + "," + str(blue), qos=1)
     #time.sleep(1)
     #print ("Clear, Red, Green, Blue:", clear, red, green, blue)
     #print (type(clear), type(clear[0]), type(clear[1]))
