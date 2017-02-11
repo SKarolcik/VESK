@@ -224,7 +224,7 @@ waitTime = 0.01
 
 sta_if = network.WLAN(network.STA_IF)
 sta_if.active(True)
-sta_if.connect('Cambs_Hack')
+sta_if.connect('EEERover','exhibition')
 
 mqttc = MQTTClient('1',server = '192.168.0.10')
 
