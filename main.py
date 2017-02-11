@@ -222,6 +222,8 @@ def decode(inString):
 
 waitTime = 0.01	
 
+def create_json(c,r,g,b):
+    return True
 
 ap_if = network.WLAN(network.AP_IF)
 ap_if.active(False)
@@ -256,6 +258,7 @@ while(True):
     i2C.writeto(41, b'\xbA') #Write command to access color register
     blue = decode(i2C.readfrom(41, 2)) #Read 2 bytes from color register
     time.sleep(waitTime)
+    create_json(clear,red,green,blue)
     mqttc.publish('esys/VESKembedded/test', str(clear) + "," + str(red) + "," + str(green) + "," + str(blue), qos=1)
     #time.sleep(1)
     #print ("Clear, Red, Green, Blue:", clear, red, green, blue)
