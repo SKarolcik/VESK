@@ -193,10 +193,11 @@ class MQTTClient:
     # If not, returns immediately with None. Otherwise, does
     # the same processing as wait_msg.
     def check_msg(self):
-        self.sock.setblocking(False)
+        self.sock.setblocking(True)
         return self.wait_msg()
 
-
+def printData(topic,msg):
+    print(topic + " " + msg)
 
 
 
@@ -239,12 +240,11 @@ mqttc = MQTTClient('1',server = '192.168.0.10')
 mqttc.keepalive = 60
 
 
-#connect
-
-
-
-
+#connect and set subscription
 mqttc.connect()
+mqttc.set_callback(printData)
+mqttc.subscribe('esys/VESKembedded/test',1)
+
 while(True):
     i2C.writeto(41, b'\xb4') #Write command to access color register
     clear = decode(i2C.readfrom(41, 2)) #Read 2 bytes from color register
@@ -260,6 +260,7 @@ while(True):
     time.sleep(waitTime)
     create_json(clear,red,green,blue)
     mqttc.publish('esys/VESKembedded/test', str(clear) + "," + str(red) + "," + str(green) + "," + str(blue), qos=1)
+    mqttc.check_msg()
     #time.sleep(1)
     #print ("Clear, Red, Green, Blue:", clear, red, green, blue)
     #print (type(clear), type(clear[0]), type(clear[1]))
