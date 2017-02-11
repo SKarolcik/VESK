@@ -222,9 +222,15 @@ def decode(inString):
 
 waitTime = 0.01	
 
+
+ap_if = network.WLAN(network.AP_IF)
+ap_if.active(False)
 sta_if = network.WLAN(network.STA_IF)
 sta_if.active(True)
 sta_if.connect('EEERover','exhibition')
+while (sta_if.isconnected() == False):
+    time.sleep(0.1)
+print (sta_if.isconnected())
 
 mqttc = MQTTClient('1',server = '192.168.0.10')
 
