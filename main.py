@@ -1,6 +1,8 @@
 from machine import I2C, Pin
 import time
 import network
+import json
+import machine, neopixel
 
 
 
@@ -196,13 +198,52 @@ class MQTTClient:
         self.sock.setblocking(True)
         return self.wait_msg()
 
+global red_th, green_th, blue_th
+
+def clamp(n, minn, maxn):
+    return max(min(maxn, n), minn)
+
+def smooth_change(r,g,b):
+    #red = green = blue = False
+    #if np[0][0] < r :
+    new_red = np[0][0]
+    new_green = np[0][1]
+    new_blue = np[0][2]
+
+    if not((np[0][0] == 0 and r == -1) or (np[0][0] == 255 and r == 1)):
+        new_red = clamp(np[0][0] + r,0,255)
+    #else:
+    #    new_red = np[0][0] - 1
+    #if np[0][1] < g :
+    if not((np[0][1] == 0 and g == -1) or (np[0][1] == 255 and g == 1)):
+        new_green = clamp(np[0][1] + g,0,255)
+    #else:
+     #   new_green = np[0][1] - 1
+    #if np[0][2] < b :
+    if not((np[0][2] == 0 and b == -1) or (np[0][2] == 255 and b == 1)):
+        new_blue = clamp(np[0][2] + b,0,255)
+    #else:
+     #   new_blue = np[0][2] - 1
+
+    for i in range(24):
+        np[i] = (new_red,new_green,new_blue)
+    print ("Current values: " + str(new_red) + " " + str(new_green) + " " + str(new_blue))
+    print ("Targete values: " + str(r) + " " + str(g) + " " + str(b))
+    np.write()
+        
+
 def printData(topic,msg):
-    print(topic + " " + msg)
+    outp = str(msg)
+    print (outp[2:-1])
+    data = json.loads(outp[2:-1])
+    smooth_change(data['Red'],data['Green'],data['Blue'])
+    #print(topic + " " + msg)
 
 
 
 
 i2C = I2C(scl=Pin(5), sda=Pin(4))
+np = neopixel.NeoPixel(machine.Pin(12), 24)
 
 print('Connecting to TCS34725...')
 i2C.writeto(41, b'\xb2') #Write command to access ID register
@@ -224,7 +265,10 @@ def decode(inString):
 waitTime = 0.01	
 
 def create_json(c,r,g,b):
-    return True
+    #json = str('{ ' + "\"Clear\" : " + c + ', '+ "\"Red\" : " + r + ', ' + "\"Green\" : " + g + ', '+ "\"Blue\" : " + c + ' }'
+    #str(clear) + "," + str(red) + "," + str(green) + "," + str(blue) 
+    json1 = json.dumps({'Clear': c, 'Red': r, 'Green': g, 'Blue': b})
+    return json1
 
 ap_if = network.WLAN(network.AP_IF)
 ap_if.active(False)
@@ -235,10 +279,10 @@ while (sta_if.isconnected() == False):
     time.sleep(0.1)
 print (sta_if.isconnected())
 
-mqttc = MQTTClient('1',server = '192.168.0.10')
+mqttc = MQTTClient('1',server = '192.168.0.112')
+
 
 mqttc.keepalive = 60
-
 
 #connect and set subscription
 mqttc.connect()
@@ -258,9 +302,12 @@ while(True):
     i2C.writeto(41, b'\xbA') #Write command to access color register
     blue = decode(i2C.readfrom(41, 2)) #Read 2 bytes from color register
     time.sleep(waitTime)
-    create_json(clear,red,green,blue)
-    mqttc.publish('esys/VESKembedded/test', str(clear) + "," + str(red) + "," + str(green) + "," + str(blue), qos=1)
+    #print (str(create_json(clear,red,green,blue)))
+    
+    
+    mqttc.publish('esys/VESKembedded/publish', str(create_json(clear,red,green,blue)), qos=1)
+
     mqttc.check_msg()
-    #time.sleep(1)
+    #time.sleep(1.5)
     #print ("Clear, Red, Green, Blue:", clear, red, green, blue)
     #print (type(clear), type(clear[0]), type(clear[1]))
