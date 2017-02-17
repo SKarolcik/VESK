@@ -10,7 +10,7 @@ import usocket as socket
 import ustruct as struct
 from ubinascii import hexlify
 
-class MQTTException(Exception):
+class MQTTException(Exception):                                 #MQTT client class, copied code
     pass
 
 class MQTTClient:
@@ -141,7 +141,6 @@ class MQTTClient:
         pkt = bytearray(b"\x82\0\0\0")
         self.pid += 1
         struct.pack_into("!BH", pkt, 1, 2 + 2 + len(topic) + 1, self.pid)
-        #print(hex(len(pkt)), hexlify(pkt, ":"))
         self.sock.write(pkt)
         self._send_str(topic)
         self.sock.write(qos.to_bytes(1, "little"))
@@ -155,10 +154,6 @@ class MQTTClient:
                     raise MQTTException(resp[3])
                 return
 
-    # Wait for a single incoming MQTT message and process it.
-    # Subscribed messages are delivered to a callback previously
-    # set by .set_callback() method. Other (internal) MQTT
-    # messages processed internally.
     def wait_msg(self):
         res = self.sock.read(1)
         self.sock.setblocking(True)
@@ -191,56 +186,66 @@ class MQTTClient:
         elif op & 6 == 4:
             assert 0
 
-    # Checks whether a pending message from server is available.
-    # If not, returns immediately with None. Otherwise, does
-    # the same processing as wait_msg.
     def check_msg(self):
         self.sock.setblocking(True)
         return self.wait_msg()
 
-global red_th, green_th, blue_th
+consumption = 0
 
-def clamp(n, minn, maxn):
+
+#Simple clamp function to clamp values to the desired range
+def clamp(n, minn, maxn):               
     return max(min(maxn, n), minn)
 
-def smooth_change(r,g,b):
-    #red = green = blue = False
-    #if np[0][0] < r :
+
+#Adds parsed value from the server to the individual colour components
+#Makes sure to not overflow any of the components, checks for addition to 255(max value)
+#and substraction from 0 (min values)
+#Also calculates the current consumption, based on the fact that each LED takes 18mA
+#at full brightness of 255 and assuming linear current consumption decrease at lower values
+
+def smooth_change(r,g,b):               
     new_red = np[0][0]
     new_green = np[0][1]
     new_blue = np[0][2]
 
-    if not((np[0][0] == 0 and r == -1) or (np[0][0] == 255 and r == 1)):
+    if not((np[0][0] == 0 and r == -1) or (np[0][0] == 255 and r == 1)):    
         new_red = clamp(np[0][0] + r,0,255)
-    #else:
-    #    new_red = np[0][0] - 1
-    #if np[0][1] < g :
+
     if not((np[0][1] == 0 and g == -1) or (np[0][1] == 255 and g == 1)):
         new_green = clamp(np[0][1] + g,0,255)
-    #else:
-     #   new_green = np[0][1] - 1
-    #if np[0][2] < b :
+
     if not((np[0][2] == 0 and b == -1) or (np[0][2] == 255 and b == 1)):
         new_blue = clamp(np[0][2] + b,0,255)
-    #else:
-     #   new_blue = np[0][2] - 1
 
+
+    global consumption 
+    consumption = float(float(new_red+new_green+new_blue)/float(256*3) * 18 * 24 * 5) #Power consumption in mW
     for i in range(24):
         np[i] = (new_red,new_green,new_blue)
     print ("Current values: " + str(new_red) + " " + str(new_green) + " " + str(new_blue))
-    print ("Targete values: " + str(r) + " " + str(g) + " " + str(b))
     np.write()
-        
 
+
+#Callback function, called every time message on the subscribed topic is received
+#Parses the json and calls smooth_change function to set the colour change
+#Alternatively eneters polling loop where it momentarily disconnects from MQTT 
 def printData(topic,msg):
     outp = str(msg)
     print (outp[2:-1])
     data = json.loads(outp[2:-1])
-    smooth_change(data['Red'],data['Green'],data['Blue'])
+    if (data['Red'] == 0 and data['Green'] == 0 and data['Blue'] == 0):
+        mqttc.disconnect()
+        time.sleep(0.75)
+        mqttc.connect()
+        mqttc.set_callback(printData)
+        mqttc.subscribe('esys/VESKembedded/test',1)
+    else:
+        smooth_change(data['Red'],data['Green'],data['Blue'])
     #print(topic + " " + msg)
 
 
-
+#Define LED object as well as I2C comms channel
 
 i2C = I2C(scl=Pin(5), sda=Pin(4))
 np = neopixel.NeoPixel(machine.Pin(12), 24)
@@ -259,27 +264,38 @@ i2C.writeto(41, b'\x03') #Write 0x03 to enable register
 i2C.writeto(41, b'\xaf') #Write command to access gain register
 i2C.writeto(41, b'\x00') #Write 0x02 to set gain x16
 
+i2C.writeto(41, b'\xa1') #Write command to access RGBC timing register
+i2C.writeto(41, b'\xff') #Write 0xc0 to timing register
+
 def decode(inString):
     return (inString[0]) + 256*inString[1]
 
 waitTime = 0.01	
 
-def create_json(c,r,g,b):
-    #json = str('{ ' + "\"Clear\" : " + c + ', '+ "\"Red\" : " + r + ', ' + "\"Green\" : " + g + ', '+ "\"Blue\" : " + c + ' }'
-    #str(clear) + "," + str(red) + "," + str(green) + "," + str(blue) 
-    json1 = json.dumps({'Clear': c, 'Red': r, 'Green': g, 'Blue': b})
+
+#Create JSON formatted string to be sent via MQTT
+def create_json(c,r,g,b,cons):
+
+    json1 = json.dumps({'Clear': c, 'Red': r, 'Green': g, 'Blue': b, 'Consumption': cons}) #consumption is in mA
     return json1
 
+#Connect to the WLAN network
 ap_if = network.WLAN(network.AP_IF)
 ap_if.active(False)
 sta_if = network.WLAN(network.STA_IF)
 sta_if.active(True)
 sta_if.connect('EEERover','exhibition')
+#sta_if.connect('pavii-HP-630-Notebook-PC','af820fa3bd')
+
+#Wait until connected
 while (sta_if.isconnected() == False):
     time.sleep(0.1)
 print (sta_if.isconnected())
 
-mqttc = MQTTClient('1',server = '192.168.0.112')
+#We have set up our own MQTT broker that used name and password for added security
+mqttc = MQTTClient('1',server = '192.168.0.129')
+mqttc.user = "ESPrgb"
+mqttc.pswd = "secretPASSWORD123"
 
 
 mqttc.keepalive = 60
@@ -290,24 +306,29 @@ mqttc.set_callback(printData)
 mqttc.subscribe('esys/VESKembedded/test',1)
 
 while(True):
+    
+    
+
     i2C.writeto(41, b'\xb4') #Write command to access color register
     clear = decode(i2C.readfrom(41, 2)) #Read 2 bytes from color register
-    time.sleep(waitTime)
+    #time.sleep(waitTime)
     i2C.writeto(41, b'\xb6') #Write command to access color register
     red = decode(i2C.readfrom(41, 2)) #Read 2 bytes from color register
-    time.sleep(waitTime)
+    #time.sleep(waitTime)
     i2C.writeto(41, b'\xb8') #Write command to access color register
     green = decode(i2C.readfrom(41, 2)) #Read 2 bytes from color register
-    time.sleep(waitTime)
+    #time.sleep(waitTime)
     i2C.writeto(41, b'\xbA') #Write command to access color register
     blue = decode(i2C.readfrom(41, 2)) #Read 2 bytes from color register
-    time.sleep(waitTime)
+    #time.sleep(waitTime)
     #print (str(create_json(clear,red,green,blue)))
     
-    
-    mqttc.publish('esys/VESKembedded/publish', str(create_json(clear,red,green,blue)), qos=1)
+    #Publish sensor readings as JSON formatted string
+    mqttc.publish('esys/VESKembedded/publish', str(create_json(clear,red,green,blue,consumption)), qos=1)
 
     mqttc.check_msg()
+
+    
     #time.sleep(1.5)
     #print ("Clear, Red, Green, Blue:", clear, red, green, blue)
     #print (type(clear), type(clear[0]), type(clear[1]))
