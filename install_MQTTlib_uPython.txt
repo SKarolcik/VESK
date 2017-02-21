@@ -1,6 +1,0 @@
-1. download from https://pypi.python.org/pypi/micropython-umqtt.simple
-2. exctract
-3. copy simple.py to library location in the device
-//to find out location run 
-//import sys
-//sys.path
