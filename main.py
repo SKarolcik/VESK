@@ -251,22 +251,23 @@ i2C = I2C(scl=Pin(5), sda=Pin(4))
 np = neopixel.NeoPixel(machine.Pin(12), 24)
 
 print('Connecting to TCS34725...')
-i2C.writeto(41, b'\xb2') #Write command to access ID register
-deviceID = i2C.readfrom(41, 1)
+i2C.writeto(41, b'\xb2') #Access ID register
+deviceID = i2C.readfrom(41, 1) 
 if deviceID == b'D':
     print ('Success!')
 else:
     print('TCS34725 not responding')
 
-i2C.writeto(41, b'\xa0') #Write command to access enable register
-i2C.writeto(41, b'\x03') #Write 0x03 to enable register
+i2C.writeto(41, b'\xa0') #Access enable register
+i2C.writeto(41, b'\x03') #Write 0x03 to enter the ADC cycle
 
-i2C.writeto(41, b'\xaf') #Write command to access gain register
-i2C.writeto(41, b'\x00') #Write 0x02 to set gain x16
+i2C.writeto(41, b'\xaf') #Access gain register
+i2C.writeto(41, b'\x00') #Write 0x02 to set gain x1
 
-i2C.writeto(41, b'\xa1') #Write command to access RGBC timing register
-i2C.writeto(41, b'\xff') #Write 0xc0 to timing register
+i2C.writeto(41, b'\xa1') #Access RGBC timing register
+i2C.writeto(41, b'\xd5') #Set integration time to 101 ms
 
+#For reading 2-byte register values by applying a 1-byte offset to the more significant byte
 def decode(inString):
     return (inString[0]) + 256*inString[1]
 
@@ -309,17 +310,17 @@ while(True):
     
     
 
-    i2C.writeto(41, b'\xb4') #Write command to access color register
-    clear = decode(i2C.readfrom(41, 2)) #Read 2 bytes from color register
+    i2C.writeto(41, b'\xb4') #Access clear channel register
+    clear = decode(i2C.readfrom(41, 2)) #Read 2 bytes from clear channel register
     #time.sleep(waitTime)
-    i2C.writeto(41, b'\xb6') #Write command to access color register
-    red = decode(i2C.readfrom(41, 2)) #Read 2 bytes from color register
+    i2C.writeto(41, b'\xb6') #Access red channel register
+    red = decode(i2C.readfrom(41, 2)) #Read 2 bytes from red channel register
     #time.sleep(waitTime)
-    i2C.writeto(41, b'\xb8') #Write command to access color register
-    green = decode(i2C.readfrom(41, 2)) #Read 2 bytes from color register
+    i2C.writeto(41, b'\xb8') #Access green channel register
+    green = decode(i2C.readfrom(41, 2)) #Read 2 bytes from green channel register
     #time.sleep(waitTime)
-    i2C.writeto(41, b'\xbA') #Write command to access color register
-    blue = decode(i2C.readfrom(41, 2)) #Read 2 bytes from color register
+    i2C.writeto(41, b'\xbA') #Access blue channel register
+    blue = decode(i2C.readfrom(41, 2)) #Read 2 bytes from blue channel register
     #time.sleep(waitTime)
     #print (str(create_json(clear,red,green,blue)))
     
