@@ -3,9 +3,19 @@ VESK embedded group coursework
 
 ## Webpage
 Simply navigate to the webpage folder and open default.html
+
 Make sure all the files are included, as they are essentail for proper look of the webpage. 
 
-## setting up broker server
+## Files
+
+main.py - ESP code in micropython
+
+serverProcessing.py - Processing on the server
+
+broker_config_file.conf and password_file.txt: used for setting up the server, read below
+
+
+## Setting up broker server
 
 To set-up broker server mosquitto package needs to be downloaded
 
