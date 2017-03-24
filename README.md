@@ -1,6 +1,9 @@
 # VESK
 VESK embedded group coursework
 
+## Motor CW 2
+The file main.cpp is the code for our CW2
+
 ## Webpage
 Simply navigate to the webpage folder and open default.html
 
